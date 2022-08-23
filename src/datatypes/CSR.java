@@ -121,7 +121,7 @@ public class CSR {
 			throw new RuntimeException("No outgoing nodes from " + nodes[currNodeInd]);
 		}
 		if(getNodesOfType(currNodeInd, nextPat).length == 0) {
-			
+			throw new RuntimeException("No next node of type " + nextPat + " found for " + currNodeInd);
 		}
 		
 		int nextNode = -1; 

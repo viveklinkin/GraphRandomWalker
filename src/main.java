@@ -38,7 +38,7 @@ public class main {
 		
 		CSR graph = CSR.getCSR(nodesFile, edgesFile);
 		
-		String[] walks = graph.getWalks(walkSize, walkCount, pattern, CSR.WEIGHTED_WALK);
+		String[] walks = graph.getWalks(walkSize, walkCount, pattern, CSR.UNIFORM_WALK);
 		
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputFile)));
 		

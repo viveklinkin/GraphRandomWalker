@@ -11,13 +11,13 @@ import datatypes.CSR;
 
 public class main {
 	
-	public static String pattern = "aaabbc"; 
+	public static String pattern = "aabb"; 
 	/* 
 	 * Pattern for walks. Make sure the 
 	 * values are same as the node types specified in the nodes file.
 	 */
-	public static int walkCount = 1000; // Number of walks
-	public static int walkSize = 12; // Number of steps
+	public static int walkCount = 5000000; // Number of walks
+	public static int walkSize = 13; // Number of steps
 	
 	public static String nodesFile = "nodes.csv";  // input format - CSV - nodeNumber, nodeType
 	
@@ -26,8 +26,7 @@ public class main {
 	 * node Type should be a single character - case sensitive. 
 	 */
 	
-	public static String edgesFile = "edges.csv"; // input format - CSV - startNode, endNode, wt
-	
+	public static String edgesFile = "edges.csv"; // input format - CSV - startNode, endNode, wt	
 	/*
 	 * Not built to spot discrepancies in node vs edges. Will throw unknown exceptions.
 	 */
@@ -38,7 +37,7 @@ public class main {
 		
 		CSR graph = CSR.getCSR(nodesFile, edgesFile);
 		
-		String[] walks = graph.getWalks(walkSize, walkCount, pattern, CSR.UNIFORM_WALK);
+		String[] walks = graph.getWalks(walkSize, walkCount, pattern, CSR.WEIGHTED_WALK);
 		
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outputFile)));
 		

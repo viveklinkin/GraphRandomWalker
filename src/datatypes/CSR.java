@@ -98,31 +98,45 @@ public class CSR {
 		String[] res = new String[numWalks];
 		
 		for(int i = 0; i < numWalks; i++) {
+			
+			if(i % 1000 == 0)
+				System.out.println("checkpoint " + i);
 			StringBuffer sb = new StringBuffer();
 			int currNodeInd = (int)(Math.random() * (nodes.length));
 			while(nodeTypes[currNodeInd] != pattern.charAt(0)) {
 				currNodeInd = (int)(Math.random() * (nodes.length));
 			}
 			sb.append(nodes[currNodeInd]);
+			boolean failFlag = false;
 			for(int j = 1; j < walkSize; j++) {
 				sb.append(Constants.sep);
 				
 				currNodeInd = getNextNode(currNodeInd, pattern.charAt(j%pattern.length()), walkType);
 				
+				if(currNodeInd == -1) {
+					failFlag = true;
+					i--;
+					System.out.println("Failed walk no:" + i + " node:" + currNodeInd + " nodeType:" + pattern.charAt(j%pattern.length()));
+					
+					break;
+				}
+				
 				sb.append(currNodeInd);
 			}
-			res[i] = sb.toString();
+			if(!failFlag) {
+				res[i] = sb.toString();
+			}
 		}
 		return res;
 	}
 	
 	public int getNextNode(int currNodeInd, char nextPat, int walkType) {
-		if(getDegree(currNodeInd) == 0) {
-			throw new RuntimeException("No outgoing nodes from " + nodes[currNodeInd]);
-		}
-		if(getNodesOfType(currNodeInd, nextPat).length == 0) {
-			throw new RuntimeException("No next node of type " + nextPat + " found for " + currNodeInd);
-		}
+//		if(getDegree(currNodeInd) == 0) {
+//			throw new RuntimeException("No outgoing nodes from " + nodes[currNodeInd]);
+//		}
+//		if(getNodesOfType(currNodeInd, nextPat).length == 0) {
+//			throw new RuntimeException("No next node of type " + nextPat + " found for " + currNodeInd);
+//		}
 		
 		int nextNode = -1; 
 		switch(walkType) {
@@ -131,6 +145,7 @@ public class CSR {
 			default: 
 				nextNode = getNextUniformNode(currNodeInd, nextPat);
 		}
+		
 		
 		return nextNode;
 	}
@@ -145,7 +160,7 @@ public class CSR {
 		}
 		
 		if(count == 0) {
-			throw new RuntimeException("No next node of type " + nextPat + " found for " + currNodeInd);
+			return new int[0];
 		}
 		
 		int[] res = new int[count];
@@ -169,7 +184,7 @@ public class CSR {
 		}
 		
 		if(count == 0) {
-			throw new RuntimeException("No next node of type " + nextPat + " found for " + currNodeInd);
+			return new double[0];
 		}
 		
 		double[] res = new double[count];
@@ -211,6 +226,9 @@ public class CSR {
 	private int getNextWeightedNode(int currNodeInd, char nextPat) {
 		// TODO Auto-generated method stub
 		int[] candidates = getNodesOfType(currNodeInd, nextPat);
+		if(candidates.length == 0) {
+			return -1;
+		}
 		double[] wts = getWeightsOfType(currNodeInd, nextPat);
 		double[] cumSum = getCumSum(wts);
 		double randomNum = Math.random() * ((cumSum[cumSum.length-1]));
@@ -222,6 +240,11 @@ public class CSR {
 	private int getNextUniformNode(int currNodeInd, char nextPat) {
 		// TODO Auto-generated method stub
 		int[] candidates = getNodesOfType(currNodeInd, nextPat);
+		
+		if(candidates.length == 0) {
+			return -1;
+		}
+		
 		int nextNode = (int)(Math.random() * (candidates.length));		
 		return candidates[nextNode];
 	}
@@ -236,88 +259,77 @@ public class CSR {
 		System.out.println("Analysing files");
 		
 		String line = null;
-		List<String> lines1 = new ArrayList<String>();
-		List<String> lines2 = new ArrayList<String>();
+		List<NodeEntry> nodesE = new ArrayList<>();
+		List<EdgeEntry> edgesE = new ArrayList<>();
+		
 		while ((line = reader1.readLine()) != null) {
-	         lines1.add(line);
+	        String[] x = line.split(Constants.sep);
+	        NodeEntry x1 = new NodeEntry();
+	        x1.node = Integer.parseInt(x[0]);
+	        x1.nodeType = x[1].charAt(0);
+	        nodesE.add(x1);
 		}
 		while ((line = reader2.readLine()) != null) {
-	         lines2.add(line);
+			String[] x = line.split(Constants.sep);
+	        EdgeEntry x1 = new EdgeEntry();
+	        x1.node1 = Integer.parseInt(x[0]);
+	        x1.node2 = Integer.parseInt(x[1]);
+	        x1.wt = Double.parseDouble(x[2]);
+	        edgesE.add(x1); 
 		}
 		
-		Collections.sort(lines1, new Comparator<String>() {
+		Collections.sort(nodesE, new Comparator<NodeEntry>() {
 		    @Override
-		    public int compare(String o1, String o2) {
-		    	String[] o1obj = o1.split(Constants.sep);
-		    	String[] o2obj = o2.split(Constants.sep);
+		    public int compare(NodeEntry o1, NodeEntry o2) {
 		    	
-		    	int i1 = Integer.parseInt(o1obj[0]);
-		    	int i2 = Integer.parseInt(o2obj[0]);
-		    	
-		    	if(i1 == i2) {
+		    	if(o1.node == o2.node) {
 		    		throw new RuntimeException("Node duplicates found!");
 		    	}
 		    	
-		        return new Integer(i1).compareTo(i2);
+		        return new Integer(o1.node).compareTo(o2.node);
 		    }
 		});
 		
-		Collections.sort(lines2, new Comparator<String>() {
+		Collections.sort(edgesE, new Comparator<EdgeEntry>() {
 		    @Override
-		    public int compare(String o1, String o2) {
-		    	String[] o1obj = o1.split(Constants.sep);
-		    	String[] o2obj = o2.split(Constants.sep);
+		    public int compare(EdgeEntry o1, EdgeEntry o2) {
 		    	
-		    	int i1 = Integer.parseInt(o1obj[0]);
-		    	int i2 = Integer.parseInt(o2obj[0]);
-		    	
-		    	int j1 = Integer.parseInt(o1obj[1]);
-		    	int j2 = Integer.parseInt(o2obj[1]);
-		    	
-		    	
-		    	if(i1 == i2) {
-		    		if(j1 == j2) {
+		    	if(o1.node1 == o2.node1) {
+		    		if(o1.node2 == o2.node2) {
 		    			throw new RuntimeException("Edge duplicates found!");
 		    		}
-		    		return new Integer(j1).compareTo(j2);
+		    		return new Integer(o1.node2).compareTo(o2.node2);
 		    	}
 		    	
-		        return new Integer(i1).compareTo(i2);
+		        return new Integer(o1.node1).compareTo(o2.node1);
 		    }
 		});
 		
 		
 		System.out.println("Creating CSR");
-		res.init(lines1.size(), lines2.size());
+		res.init(nodesE.size(), edgesE.size());
 		System.out.println("Constructing CSR");
 		
-		for(int i = 0; i < lines1.size(); i++) {
-			String x = lines1.get(i);
-			String[] spl = x.split(Constants.sep);
-			
-			res.getNodes()[i] = Integer.parseInt(spl[0]);
-			res.getNodeTypes()[i] = spl[1].charAt(0);
+		for(int i = 0; i < nodesE.size(); i++) {
+	
+			res.getNodes()[i] = nodesE.get(i).node;
+			res.getNodeTypes()[i] = nodesE.get(i).nodeType;
 			
 		}
 		int offset = 0;
 		int i = 1;
 		res.getNodes()[0] = offset;
-		for(int j = 0; j < lines2.size(); j++) {
-			String x = lines2.get(j);
-			String[] spl = x.split(Constants.sep);
-			int n1 = Integer.parseInt(spl[0]);
-			int n2 = Integer.parseInt(spl[1]);
-			double wt = Double.parseDouble(spl[2]);
+		for(int j = 0; j < edgesE.size(); j++) {
 			
-			while(res.getNodes()[i-1] != n1) {
+			while(res.getNodes()[i-1] != edgesE.get(j).node1) {
 				res.getOffset()[i++] = offset;
 			}
-			res.getEdges()[j] = n2;
-			res.getWt()[j] = wt;
+			res.getEdges()[j] = edgesE.get(j).node2;
+			res.getWt()[j] = edgesE.get(j).wt;
 			
 			offset++;
 		}
-		res.getOffset()[i] = lines2.size() - 1;		
+		res.getOffset()[i] = edgesE.size() - 1;		
 		
 		System.out.println("Completed: (V,E) (" + res.nodeSize() + "," + res.edgeSize() + ")");
 		
